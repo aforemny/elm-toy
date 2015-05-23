@@ -18599,9 +18599,12 @@ Elm.Main.make = function (_elm) {
    $AnimationFrame = Elm.AnimationFrame.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Geometry = Elm.Geometry.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $Math$Matrix4 = Elm.Math.Matrix4.make(_elm),
    $Math$Vector3 = Elm.Math.Vector3.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm),
    $WebGL = Elm.WebGL.make(_elm),
    $Window = Elm.Window.make(_elm);
    var Vertex = F2(function (a,b) {
@@ -18626,7 +18629,7 @@ Elm.Main.make = function (_elm) {
    0,
    7.5));
    var camera = A3($Math$Matrix4.makeLookAt,
-   A3($Math$Vector3.vec3,0,28,8),
+   A3($Math$Vector3.vec3,0,16,8),
    A3($Math$Vector3.vec3,0,0,0),
    A3($Math$Vector3.vec3,0,0,-1));
    var perspective = function (_v0) {
@@ -18639,7 +18642,7 @@ Elm.Main.make = function (_elm) {
               1.0e-2,
               100);}
          _U.badCase($moduleName,
-         "on line 116, column 3 to 54");
+         "on line 155, column 3 to 54");
       }();
    };
    var time = A3($Signal.foldp,
@@ -18654,40 +18657,66 @@ Elm.Main.make = function (_elm) {
    }),
    0,
    $AnimationFrame.frame);
-   var fragmentShader = {"src": "\n\nprecision mediump float;\n\nvarying float vheight;\nvarying vec3  vnormal;\nvarying float vtime;\nvarying vec2  vcoord;\n\nvoid main() {\n  vec3 green = vec3(0.31, 0.60, 0.02);\n  vec3 brown = vec3(0.56, 0.35, 0.01);\n  vec3 blue1 = vec3(0.20, 0.40, 0.64); // light blue\n  vec3 blue2 = vec3(0.13, 0.29, 0.53); // dark blue\n\n  vec3 light  = vec3(0,1,0);\n  vec3 normal = normalize(vnormal);\n\n  vec3 color = vec3(0);\n  if (vheight >= 0.25) {\n\n    color = green;\n    color = dot(light, normal) * color;\n\n  } else {\n\n    vec2 xz = 3.14*(-1.0 + 2.0*vcoord);\n    float r = length(xz)/sqrt(2.0);\n\n    float arg = mod(r+vtime/200.0, 6.28);\n    float alpha = 0.15*sin(arg)/arg;\n\n    color = alpha * blue1 + (1.0 - alpha) * blue2;\n    //color = alpha * vec3(1) + (1.0 - alpha) * vec3(0);\n    color = dot(light, normal) * color;\n\n  }\n\n  gl_FragColor = vec4(color, 1);\n}\n\n"};
-   var vertexShader = {"src": "\n\nattribute vec3  position, normal;\nattribute vec2  texCoord;\nuniform   mat4  perspective, camera, rotation, translation;\nuniform   float time;\nvarying   float vheight;\nvarying   vec3  vnormal;\nvarying   float vtime;\nvarying   vec2  vcoord;\n\nvoid main() {\n\n  vec3 sealevel = vec3(0.0, 2.0, -16.0);\n  vec3 pos = max(position,sealevel);\n  gl_Position = perspective*camera*rotation*translation*vec4(pos, 1);\n  vheight = clamp(position.y/8.0, 0.0, 1.0); \n  vnormal = normal;\n  vcoord  = texCoord;\n  vtime   = time;\n}\n\n"};
-   var view = F3(function (dims,
+   var water = $Signal.mailbox($Maybe.Nothing);
+   var loadTextures = Elm.Native.Task.make(_elm).perform(A2($Task.andThen,
+   $WebGL.loadTexture("water1.png"),
+   function (water1) {
+      return A2($Task.andThen,
+      $WebGL.loadTexture("water2.png"),
+      function (water2) {
+         return A2($Signal.send,
+         water.address,
+         $Maybe.Just({ctor: "_Tuple2"
+                     ,_0: water1
+                     ,_1: water2}));
+      });
+   }));
+   var fragmentShader = {"src": "\n\nprecision mediump float;\n\nvarying float vheight;\nvarying vec3  vnormal;\nvarying float vtime;\nvarying vec2  vcoord;\nuniform sampler2D water1;\nuniform sampler2D water2;\nvarying vec3 vnormal2;\nvarying float waterflag;\n\nvoid main() {\n  vec3 green = vec3(0.31, 0.60, 0.02);\n  vec3 brown = vec3(0.56, 0.35, 0.01);\n  vec3 blue1 = vec3(0.20, 0.40, 0.64); // light blue\n  vec3 blue2 = vec3(0.13, 0.29, 0.53); // dark blue\n\n  vec3 light  = vec3(0,1,0);\n  vec3 normal  = normalize(vnormal);\n  vec3 normal2 = normalize(vnormal2);\n\n  vec3 color = vec3(0);\n  if (vheight > 0.249) {\n\n    color = green;\n    color = dot(light, normal) * color;\n\n  } else {\n\n    //vec2 xz = 15.0*(-1.0 + 2.0*vcoord);\n    //float r = length(xz);\n    //float arg = mod(r-vtime/200.0, 30.0);\n    //float argx = mod(r-vtime/200.0, 30.0);\n    //float argz = mod(r-vtime/200.0, 30.0);\n    //float alpha = sin(arg)/arg;\n    //float alpha = 0.5*sin(argx)/argx + 0.5*sin(argz)/argz;\n\n//    float alpha = 0.0;\n//    if (arg <= 1.0) {\n//      alpha =      arg *texture2D(water1, vcoord).x\n//            + (1.0-arg)*texture2D(water2, vcoord).x;\n//    } else {\n//      alpha = (1.0-arg)*texture2D(water2, vcoord).x\n//            + (2.0-arg)*texture2D(water1, vcoord).x;\n//    }\n    //color = alpha * blue1 + (1.0 - alpha) * blue2;\n    //color = alpha * vec3(1) + (1.0 - alpha) * vec3(0);\n\n    float arg   = mod(vtime/500.0, 2.0);\n    vec3 jitter = vec3(0);\n    if (arg <= 1.0) {\n      jitter =      arg *vec3(texture2D(water2, vcoord))\n             + (1.0-arg)*vec3(texture2D(water1, vcoord));\n    } else {\n      jitter = (arg-1.0)*vec3(texture2D(water1, vcoord))\n             + (2.0-arg)*vec3(texture2D(water2, vcoord));\n    }\n\n    color = blue1;\n    color = (0.5*dot(light, normal2) + 0.5*dot(light, normal)) * color;\n\n  }\n\n  gl_FragColor = vec4(color, 1);\n}\n\n"};
+   var vertexShader = {"src": "\n\nattribute vec3  position, normal;\nattribute vec2  texCoord;\nuniform   mat4  perspective, camera, rotation, translation;\nuniform   float time;\nvarying   float vheight;\nvarying   vec3  vnormal;\nvarying   float vtime;\nvarying   vec2  vcoord;\nvarying   vec3  vnormal2;\nuniform sampler2D water1, water2;\nvarying float waterflag;\n\nvoid main() {\n\n  vec3 sealevel = vec3(0.0, 2.0, -16.0);\n  vec3 pos = position;\n  vheight = clamp(pos.y/8.0, 0.0, 1.0); \n  vnormal = normal;\n  vnormal2 = normal;\n  waterflag = 0.0;\n  if (pos.y <= 2.0) {\n\n    float arg = mod(time/1000.0, 2.0);\n    vec4 temp = vec4(0);\n    if (arg <= 1.0) {\n      temp =      arg *texture2D(water1, position.xz/vec2(15.0))\n           + (1.0-arg)*texture2D(water2, position.xz/vec2(15.0));\n      vheight = temp.r;\n    } else {\n      temp = (arg-1.0)*texture2D(water2, position.xz/vec2(15.0))\n           + (2.0-arg)*texture2D(water1, position.xz/vec2(15.0));\n    }\n    vheight = pos.y/8.0;\n    vnormal = temp.xyz;\n    waterflag = 1.0;\n    pos.y = 0.12*temp.a + 1.5;\n    //pos.y = 1.5;\n    //vnormal = vec3(0,1,0);\n\n  }\n\n  gl_Position = perspective*camera*rotation*translation*vec4(pos, 1);\n  vcoord  = texCoord;\n  vtime   = time;\n}\n\n"};
+   var view = F4(function (dims,
    theta,
-   time) {
+   time,
+   water) {
       return function () {
-         var unifs = {_: {}
-                     ,camera: camera
-                     ,perspective: perspective(dims)
-                     ,rotation: rotation(theta)
-                     ,time: time
-                     ,translation: translation};
-         return A2($WebGL.webgl,
-         dims,
-         _L.fromArray([A4($WebGL.entity,
-         vertexShader,
-         fragmentShader,
-         $Geometry.terrain,
-         unifs)]));
+         switch (water.ctor)
+         {case "Just":
+            switch (water._0.ctor)
+              {case "_Tuple2":
+                 return function () {
+                      var unifs = {_: {}
+                                  ,camera: camera
+                                  ,perspective: perspective(dims)
+                                  ,rotation: rotation(theta)
+                                  ,time: time
+                                  ,translation: translation
+                                  ,water1: water._0._0
+                                  ,water2: water._0._1};
+                      return A2($WebGL.webgl,
+                      dims,
+                      _L.fromArray([A4($WebGL.entity,
+                      vertexShader,
+                      fragmentShader,
+                      $Geometry.terrain,
+                      unifs)]));
+                   }();}
+              break;
+            case "Nothing":
+            return $Graphics$Element.empty;}
+         _U.badCase($moduleName,
+         "between lines 168 and 183");
       }();
    });
-   var main = A4($Signal.map3,
+   var main = A5($Signal.map4,
    view,
    $Window.dimensions,
    angle,
-   time);
-   var fragmentShader$ = {"src": "\n\nprecision mediump float;\n\nvoid main() {\n  vec3 color = vec3(0.20, 0.40, 0.64);\n  vec3 light  = vec3(0,1,0);\n  vec3 normal = vec3(0,1,0);\n  color = dot(light, normal) * color;\n  gl_FragColor = vec4(color, 1.0);\n}\n\n"};
-   var vertexShader$ = {"src": "\n\nattribute vec3  position, normal;\nuniform   mat4  perspective, camera, rotation, translation;\n\nvoid main() {\n  gl_Position = perspective*camera*rotation*translation*vec4(position, 1);\n}\n\n"};
+   time,
+   water.signal);
    _elm.Main.values = {_op: _op
-                      ,vertexShader$: vertexShader$
-                      ,fragmentShader$: fragmentShader$
                       ,vertexShader: vertexShader
                       ,fragmentShader: fragmentShader
                       ,main: main
+                      ,water: water
                       ,angle: angle
                       ,time: time
                       ,perspective: perspective
