@@ -18643,7 +18643,7 @@ Elm.Main.make = function (_elm) {
               1.0e-2,
               100);}
          _U.badCase($moduleName,
-         "on line 187, column 3 to 54");
+         "on line 191, column 3 to 54");
       }();
    };
    var time = A3($Signal.foldp,
@@ -18672,7 +18672,7 @@ Elm.Main.make = function (_elm) {
                      ,_1: water2}));
       });
    }));
-   var fragmentShader = {"src": "\n\nprecision mediump float;\n\nvarying float vheight;\nvarying vec3  vnormal;\nvarying float vtime;\nvarying vec2  vcoord;\n\nvoid main() {\n  vec3 green = vec3(0.31, 0.60, 0.02);\n  vec3 brown = vec3(0.56, 0.35, 0.01);\n  vec3 blue1 = vec3(0.20, 0.40, 0.64); // light blue\n  vec3 blue2 = vec3(0.13, 0.29, 0.53); // dark blue\n\n  vec3 light  = vec3(0,1,0);\n  vec3 normal  = normalize(vnormal);\n\n  vec3 color = vec3(0);\n  if (vheight < 1.0 / 128.0) {\n    float alpha = pow(-4.0*clamp(vheight,-1.0,0.0), 0.25);\n    color = (1.0 - alpha) * brown + alpha * blue2;\n    color = pow(dot(light, normal), 2.0) * color;\n  } else {\n    color = dot(light, normal) * green;\n  }\n\n  gl_FragColor = vec4(color, 1.0);\n}\n\n"};
+   var fragmentShader = {"src": "\n\nprecision mediump float;\n\nvarying float vheight;\nvarying vec3  vnormal;\nvarying float vtime;\nvarying vec2  vcoord;\n\nvoid main() {\n  vec3 green = vec3(0.31, 0.60, 0.02);\n  vec3 brown = vec3(0.56, 0.35, 0.01);\n  vec3 blue1 = vec3(0.20, 0.40, 0.64); // light blue\n  vec3 blue2 = vec3(0.13, 0.29, 0.53); // dark blue\n\n  vec3 light  = vec3(0,1,0);\n  vec3 normal  = normalize(vnormal);\n\n  vec3 color = vec3(0);\n  if (vheight < 1.0 / 128.0) {\n    float alpha = pow(-4.0*clamp(vheight,-1.0,0.0), 0.25);\n    if (vheight < 0.0) {\n      color = pow(dot(light, normal), 32.0) * brown;\n    } else {\n      color = pow(dot(light, normal), 1.0) * brown;\n    }\n    color = (1.0 - alpha) * color + alpha * blue1;\n  } else {\n    color = dot(light, normal) * green;\n  }\n\n  gl_FragColor = vec4(color, 1.0);\n}\n\n"};
    var vertexShader = {"src": "\n\nattribute vec3  position, normal;\nattribute vec2  texCoord;\nuniform   mat4  perspective, camera, rotation, translation;\nuniform   float time;\nvarying   float vheight;\nvarying   vec3  vnormal;\nvarying   float vtime;\nvarying   vec2  vcoord;\nuniform sampler2D water1, water2;\n\nvoid main() {\n\n  vec3 sealevel = vec3(0.0, 2.0, -16.0);\n  vec3 pos = position - vec3(0,2,0);\n  vheight = (pos.y-2.0)/8.0;\n  vnormal = normal;\n  gl_Position = perspective*camera*rotation*translation*vec4(pos, 1);\n  vcoord  = texCoord;\n  vtime   = time;\n}\n\n"};
    var fragmentShader$ = {"src": "\n\nprecision mediump float;\n\nvarying vec3  vnormal;\nvarying float vtime;\nvarying vec2  vcoord;\nuniform sampler2D water1;\nuniform sampler2D water2;\nvarying vec2 tcoord;\nuniform vec3 view;\n\nvoid main() {\n  vec3 black = vec3(0);\n  vec3 white = vec3(1);\n  vec3 green = vec3(0.31, 0.60, 0.02);\n  vec3 brown = vec3(0.56, 0.35, 0.01);\n  vec3 blue1 = vec3(0.20, 0.40, 0.64); // light blue\n  vec3 blue2 = vec3(0.13, 0.29, 0.53); // dark blue\n\n  vec3 normal  = normalize(vnormal);\n\n  vec3 light = vec3(0,1,0);\n  float specular = clamp(dot(normalize(light + view), normal),0.0,1.0);\n  specular = pow(specular, 128.0);\n  vec3 color = (1.0-specular)*blue2 + specular*white;\n\n  gl_FragColor = vec4(color, 0.6);\n}\n\n"};
    var vertexShader$ = {"src": "\n\nattribute vec3  position, normal;\nattribute vec2  texCoord;\nuniform   mat4  perspective, camera, rotation, translation;\nuniform   float time;\nvarying   vec3  vnormal;\nvarying   float vtime;\nvarying   vec2  vcoord;\nvarying   vec2  tcoord;\nuniform sampler2D water1, water2;\n\nvoid main() {\n\n  float arg = mod(time/2500.0, 2.0);\n\n  vec2 px = position.xz/vec2(32,-16);\n  if (normal.x == 1.0) {\n    px = px + vec2(0.5,0);\n  }\n  vec4 temp = vec4(0);\n\n  vec3 pos = position;\n  if (arg <= 1.0) {\n    pos.y =      arg *texture2D(water1, px).a + (1.0-arg)*texture2D(water2, px).a;\n  } else {\n    pos.y = (arg-1.0)*texture2D(water2, px).a + (2.0-arg)*texture2D(water1, px).a;\n  }\n  pos.y = 2.0 + 1.0/16.0*pos.y;\n\n  vec2 dx = vec2(0,0);\n  if        (normal == vec3(0,0,0)) {\n    dx = vec2(0,  0);\n  } else if (normal == vec3(0,0,1)) {\n    dx = vec2(-1, 0);\n  } else if (normal == vec3(0,1,0)) {\n    dx = vec2(-1, 1);\n  } else if (normal == vec3(1,0,0)) {\n    dx = vec2(-1, 1);\n  } else if (normal == vec3(1,0,1)) {\n    dx = vec2( 0, 0);\n  } else if (normal == vec3(1,1,0)) {\n    dx = vec2( 0, 1);\n  }\n  px = px + dx/vec2(32,-16);\n\n  if (arg <= 1.0) {\n    temp =      arg *texture2D(water1, px) + (1.0-arg)*texture2D(water2, px);\n  } else {\n    temp = (arg-1.0)*texture2D(water2, px) + (2.0-arg)*texture2D(water1, px);\n  }\n  vnormal = normalize(temp.xyz-vec3(0.5));\n\n  gl_Position = perspective*camera*rotation*translation*vec4(pos, 1);\n\n  vcoord  = texCoord;\n  vtime   = time;\n  tcoord  = position.xz;\n}\n\n"};
@@ -18716,7 +18716,7 @@ Elm.Main.make = function (_elm) {
             case "Nothing":
             return $Graphics$Element.empty;}
          _U.badCase($moduleName,
-         "between lines 200 and 216");
+         "between lines 204 and 220");
       }();
    });
    var main = A5($Signal.map4,
