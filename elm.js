@@ -20924,7 +20924,7 @@ Elm.Main.make = function (_elm) {
    0,
    7.5));
    var camera = function () {
-      var sdist = 12;
+      var sdist = 8;
       return A3($Math$Matrix4.makeLookAt,
       A3($Math$Vector3.vec3,
       0,
