@@ -20923,10 +20923,16 @@ Elm.Main.make = function (_elm) {
    -7.5,
    0,
    7.5));
-   var camera = A3($Math$Matrix4.makeLookAt,
-   A3($Math$Vector3.vec3,0,24,16),
-   A3($Math$Vector3.vec3,0,0,0),
-   A3($Math$Vector3.vec3,0,0,-1));
+   var camera = function () {
+      var sdist = 12;
+      return A3($Math$Matrix4.makeLookAt,
+      A3($Math$Vector3.vec3,
+      0,
+      sdist + 8,
+      sdist),
+      A3($Math$Vector3.vec3,0,0,0),
+      A3($Math$Vector3.vec3,0,0,-1));
+   }();
    var perspective = function (_v0) {
       return function () {
          switch (_v0.ctor)
@@ -21010,7 +21016,7 @@ Elm.Main.make = function (_elm) {
             case "Nothing":
             return $Graphics$Element.empty;}
          _U.badCase($moduleName,
-         "between lines 204 and 220");
+         "between lines 207 and 223");
       }();
    });
    var main = A5($Signal.map4,
