@@ -25660,9 +25660,9 @@ Elm.Main.make = function (_elm) {
       $Math$Vector3.j));
    };
    var translation = $Math$Matrix4.makeTranslate(A3($Math$Vector3.vec3,
-   -7.5,
+   -8,
    0,
-   7.5));
+   8));
    var camera = function () {
       var sdist = 16;
       return A3($Math$Matrix4.makeLookAt,
